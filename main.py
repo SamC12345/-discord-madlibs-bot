@@ -22,7 +22,7 @@ class MyClient(discord.Client):
                 await message.channel.send(returnMessage)
                 print("sent message!")
             elif isCommand(text):
-                returnMessage = handleCommand(text)
+                returnMessage = await handleCommand(text, message)
                 await message.channel.send(returnMessage)
                 print("sent message!")
 

@@ -1,12 +1,13 @@
 from dotenv import dotenv_values
 import db_func
+import random
 from sentenceConverter import POSReplaceableWords
 
 config = dotenv_values(".env")
 FLAG = config["FLAG"]
 
 
-def createCategory(args):
+async def createCategory(args, message):
     if len(args) == 0:
         return "please specify a category name"
     elif len(args) == 1:
@@ -25,7 +26,7 @@ def createCategory(args):
     return "couldn't process your request :/"
 
 
-def getWordsFromCategory(args):
+async def getWordsFromCategory(args, message):
     if len(args) == 0:
         return "please specify a category name"
     elif len(args) == 1:
@@ -43,7 +44,7 @@ def getWordsFromCategory(args):
     return "couldn't process your request :/"
 
 
-def addWordsToCategory(args):
+async def addWordsToCategory(args, message):
     if len(args) == 0:
         return "please specify a category name"
     elif len(args) == 1:
@@ -78,22 +79,60 @@ def isCommand(text):
     return False
 
 
-def handleCommand(text):
+async def handleCommand(text, message):
     words = text.split(" ")
     if len(words) > 0 and words[0].startswith(FLAG):
         command = words[0][1:].lower()
         args = words[1:]
         if command in commands:
-            return commands[command](args)
+            return await commands[command](args, message)
     return "handling command"
 
 
-def listCategories(args):
+async def listCategories(args, message):
     return f'the following categories exist: {", ".join(db_func.getCategories())}'
 
 
-def help(args):
+async def help(args, message):
     return f'here\'s my commands: {", ". join(commands.keys())}'
+
+
+async def quote(args, message):
+    if message.reference == None:
+        return "reply to a message to quote it"
+    else:
+        messageToQuote = await message.channel.fetch_message(
+            message.reference.message_id
+        )
+        quoteNumber = db_func.addQuote(
+            messageToQuote.clean_content, messageToQuote.jump_url
+        )
+        return f'quote #{quoteNumber}: "{messageToQuote.clean_content}"'
+
+
+async def getQuote(args, message):
+    if len(args) == 0:
+        return "please specify a quote number"
+    elif len(args) == 1:
+        if not args[0].isnumeric():
+            return "please specify a numeric quote number"
+        else:
+            quoteNumber = int(args[0])
+            quote = db_func.getQuote(quoteNumber)
+            if quote == None:
+                return f"couldn't find quote #{quoteNumber}"
+            else:
+                return f'quote #{quoteNumber}: "{quote["quote"]}"'
+    return "couldn't process your request :/"
+
+
+async def getRandomQuote(args, message):
+    quotes = db_func.getQuotes()
+    if len(quotes) == 0:
+        return "no quotes found :'("
+    else:
+        quote = random.choice(quotes)
+        return f'quote #{quote["number"]}: "{quote["quote"]}"'
 
 
 commands = {
@@ -107,4 +146,10 @@ commands = {
     "cl": listCategories,
     "help": help,
     "h": help,
+    "quote": quote,
+    "q": quote,
+    "quoteget": getQuote,
+    "qg": getQuote,
+    "quoterandom": getRandomQuote,
+    "qr": getRandomQuote,
 }

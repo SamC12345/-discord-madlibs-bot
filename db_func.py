@@ -1,20 +1,22 @@
 from tinydb import TinyDB, Query
 
 db = TinyDB("db.json")
+categories = db.table("categories")
+quotes = db.table("quotes")
 
 
 def categoryExists(category):
-    return 1 == db.count(Query().name == category)
+    return 1 == categories.count(Query().name == category)
 
 
 def createCategory(category, words=[]):
     if not categoryExists(category):
-        db.insert({"name": category, "words": words})
+        categories.insert({"name": category, "words": words})
 
 
 def getWordsFromCategory(category):
     createCategory(category)
-    return db.get(Query().name == category)["words"]
+    return categories.get(Query().name == category)["words"]
 
 
 def addToCategory(category, words):
@@ -22,8 +24,22 @@ def addToCategory(category, words):
     existingWords = getWordsFromCategory(category)
     updatedWords = list(set(existingWords + words))
     if len(updatedWords) != len(existingWords):
-        db.update({"words": updatedWords}, Query().name == category)
+        categories.update({"words": updatedWords}, Query().name == category)
 
 
 def getCategories():
-    return [category["name"] for category in db.all()]
+    return [category["name"] for category in categories.all()]
+
+
+def getQuotes():
+    return quotes.all()
+
+
+def addQuote(quote, url):
+    currQuoteCount = quotes.__len__()
+    quotes.insert({"number": currQuoteCount + 1, "quote": quote, "url": url})
+    return currQuoteCount + 1
+
+
+def getQuote(quoteNumber):
+    return quotes.get(Query().number == quoteNumber)
