@@ -15,9 +15,9 @@ class MyClient(discord.Client):
 
     async def on_message(self, message):
         print("Message from {0.author}: {0.content}".format(message))
-        if message.channel.name == CHANNEL_NAME and not message.author.bot:
+        if not message.author.bot:
             text = message.clean_content
-            if isSentenceToConvert(text):
+            if message.channel.name == CHANNEL_NAME and isSentenceToConvert(text):
                 returnMessage = convertSentence(text)
                 await message.channel.send(returnMessage)
                 print("sent message!")
